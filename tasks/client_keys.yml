@@ -1,0 +1,53 @@
+---
+
+- name: Generate client key
+  command: "{{ openvpn_openssl_exec }} req -nodes -newkey rsa:{{ openvpn_rsa_bits }} -keyout {{ item }}.key -out {{ item }}.csr -days {{ openvpn_key_days }} -subj '{{ openvpn_key_subj }}/CN=OpenVPN-Client-{{ item }}/'"
+  args:
+    chdir: "{{ openvpn_etc_path }}"
+    creates: "{{ item }}.key"
+  with_items: openvpn_clients
+
+- name: Sign client key
+  command: "{{ openvpn_openssl_exec }} x509 -req -in {{ item }}.csr -out {{ item }}.crt -CA {{ openvpn_ca_cert_crt }} -CAkey {{ openvpn_ca_cert_pem }} -set_serial 1 -days {{ openvpn_key_days }}"
+  args:
+    chdir: "{{ openvpn_etc_path }}"
+    creates: "{{ item }}.crt"
+  with_items: openvpn_clients
+
+- name: Fetch CA cert
+  fetch:
+    src: "{{ openvpn_ca_cert_crt }}"
+    dest: "tmp/openvpn/ca.crt"
+    flat: yes
+    fail_on_missing: yes
+
+- name: Fetch client certs
+  fetch:
+    src: "{{ openvpn_etc_path }}/{{ item }}.crt"
+    dest: "tmp/openvpn/{{ item }}.crt"
+    flat: yes
+    fail_on_missing: yes
+  with_items: openvpn_clients
+
+- name: Fetch client keys
+  fetch:
+    src: "{{ openvpn_etc_path }}/{{ item }}.key"
+    dest: "tmp/openvpn/{{ item }}.key"
+    flat: yes
+    fail_on_missing: yes
+  with_items: openvpn_clients
+
+- name: Generate client configuration file
+  template:
+    src: client.ovpn.j2
+    dest: "{{ openvpn_etc_path }}/{{ item }}--{{ ansible_fqdn }}.ovpn"
+    owner: root
+    group: root
+  with_items: openvpn_clients
+
+- name: Fetch client configuration file
+  fetch:
+    src: "{{ openvpn_etc_path }}/{{ item }}--{{ ansible_fqdn }}.ovpn"
+    dest: "tmp/{{ item }}-{{ ansible_fqdn }}.ovpn"
+    flat: yes
+  with_items: openvpn_clients

@@ -1,0 +1,33 @@
+client
+dev tun
+proto udp
+remote {{ openvpn_address }} {{ openvpn_port }}
+
+resolv-retry infinite
+nobind
+keepalive {{ openvpn_keepalive_interval }} {{ openvpn_keepalive_timeout }}
+comp-lzo {{ openvpn_lzo_compression }}
+persist-key
+persist-tun
+verb {{ openvpn_verbosity }}
+mute {{ openvpn_mute_lines }}
+
+persist-key
+persist-tun
+
+cipher {{ openvpn_cipher }}
+
+<ca>
+{% include "files/openvpn/endpoints/%s_ca.crt" % openvpn_endpoint %}
+
+</ca>
+
+<cert>
+{% include "files/openvpn/users/%s_%s.crt" % (openvpn_endpoint, item)  %}
+
+</cert>
+
+<key>
+{% include "files/openvpn/users/%s_%s.key" % (openvpn_endpoint, item) %}
+
+</key>

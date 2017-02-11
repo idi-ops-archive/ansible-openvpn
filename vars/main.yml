@@ -1,0 +1,6 @@
+---
+
+openvpn_etc_path: /etc/openvpn
+
+openvpn_packages:
+  - openvpn

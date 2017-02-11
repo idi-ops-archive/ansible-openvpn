@@ -1,0 +1,16 @@
+---
+
+- name: Create OpenVPN configuration file
+  template:
+    src: server.conf.j2
+    dest: "{{ openvpn_etc_path }}/{{ openvpn_name }}.conf"
+    owner: root
+    group: root
+  notify:
+    - restart openvpn
+
+- name: Enable and start OpenVPN service
+  service:
+    name: "openvpn@{{ openvpn_name }}.service"
+    enabled: yes
+    state: started

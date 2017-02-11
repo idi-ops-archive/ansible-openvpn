@@ -1,0 +1,30 @@
+port {{ openvpn_port }}
+proto {{ openvpn_proto }}
+dev tun
+
+cipher {{ openvpn_cipher }}
+
+ca {{ openvpn_etc_path }}/{{ openvpn_endpoint }}_ca.crt
+cert {{ openvpn_etc_path }}/{{ openvpn_endpoint }}_server.crt
+key {{ openvpn_etc_path }}/{{ openvpn_endpoint }}_server.key
+dh {{ openvpn_etc_path }}/{{ openvpn_endpoint }}_dh{{ openvpn_rsa_bits }}.txt
+
+server {{ openvpn_network }} {{ openvpn_netmask }}
+ifconfig-pool-persist {{ openvpn_endpoint }}_ipp.txt
+
+{% for cmd in openvpn_push_cmds %}
+push "{{ cmd }}"
+{% endfor %}
+
+keepalive {{ openvpn_keepalive_interval }} {{ openvpn_keepalive_timeout }}
+comp-lzo {{ openvpn_lzo_compression }}
+max-clients {{ openvpn_max_clients }}
+
+user {{ openvpn_user }}
+group {{ openvpn_group }}
+
+persist-key
+persist-tun
+
+verb {{ openvpn_verbosity }}
+mute {{ openvpn_mute_lines }}

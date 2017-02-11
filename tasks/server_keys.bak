@@ -1,0 +1,43 @@
+---
+
+- name: Create keys directory
+  file:
+    path: "{{ openvpn_keys_path }}"
+    state: directory
+
+- name: Generate CA certificate
+  command: "{{ openvpn_openssl_exec }} req -nodes -newkey rsa:{{ openvpn_rsa_bits }} -keyout ca-key.pem -out ca-csr.pem -days 3650 -subj '{{ openvpn_key_subj }}/CN=OpenVPN-CA/'"
+  args:
+    chdir: "{{ openvpn_keys_path }}"
+    creates: ca-key.pem
+
+- name: Sign CA certificate
+  command: "{{ openvpn_openssl_exec }} x509 -req -in ca-csr.pem -out ca.crt -set_serial 1 -signkey ca-key.pem -days 3650"
+  args:
+    chdir: "{{ openvpn_keys_path }}"
+    creates: ca.crt
+
+- name: Generate server key
+  command: "{{ openvpn_openssl_exec }} req -nodes -newkey rsa:{{ openvpn_rsa_bits }} -keyout server.key -out server.csr -days 3650 -subj '{{ openvpn_key_subj }}/CN=OpenVPN-Server/'"
+  args:
+    chdir: "{{ openvpn_keys_path }}"
+    creates: server.key
+
+- name: Protect server key
+  file:
+    path: "{{ openvpn_keys_path }}/server.key"
+    mode: '0400'
+
+- name: Sign server key
+  command: "{{ openvpn_openssl_exec }} x509 -req -in server.csr -out server.crt -CA ca.crt -set_serial 1 -CAkey ca-key.pem -days 3650"
+  args:
+    chdir: "{{ openvpn_keys_path }}"
+    creates: server.crt
+
+- name: Generate DH params
+  command: "{{ openvpn_openssl_exec }} dhparam -out {{ openvpn_keys_path }}/dh.pem {{ openvpn_rsa_bits }}"
+  args:
+    chdir: "{{ openvpn_keys_path }}"
+    creates: dh.pem
+
+

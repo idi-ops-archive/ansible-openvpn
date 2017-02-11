@@ -1,0 +1,22 @@
+openvpn_endpoint: server
+openvpn_port: 1194
+openvpn_proto: udp
+openvpn_max_clients: 16
+
+openvpn_rsa_bits: 2048
+openvpn_cipher: AES-256-CBC         # openvpn --show-ciphers
+openvpn_lzo_compression: adaptive
+openvpn_keepalive_interval: 2
+openvpn_keepalive_timeout: 120
+
+openvpn_network: 10.239.121.0
+openvpn_netmask: 255.255.255.0
+openvpn_push_cmds: []
+
+openvpn_clients: []
+
+openvpn_user: openvpn
+openvpn_group: openvpn
+
+openvpn_verbosity: 3
+openvpn_mute_lines: 10

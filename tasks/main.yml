@@ -1,0 +1,44 @@
+---
+
+- name: Install packages
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items: openvpn_packages
+
+- name: Create OpenVPN configuration file
+  template:
+    src: server.conf.j2
+    dest: "{{ openvpn_etc_path }}/{{ openvpn_endpoint }}.conf"
+    owner: root
+    group: root
+  notify:
+    - restart openvpn
+
+- name: Copy server files
+  copy:
+    src: "files/openvpn/endpoints/{{ openvpn_endpoint }}_{{ item }}"
+    dest: "{{ openvpn_etc_path }}"
+  with_items:
+    - ca.crt
+    - server.crt
+    - server.key
+    - "dh{{ openvpn_rsa_bits }}.txt"
+
+- name: Copy client certificates and keys
+  copy:
+    src: "{{ item }}"
+    dest: "{{ openvpn_etc_path }}"
+  with_fileglob:
+    - "{{ playbook_dir }}/files/openvpn/users/{{ openvpn_endpoint }}_*.crt"
+    - "{{ playbook_dir }}/files/openvpn/users/{{ openvpn_endpoint }}_*.key"
+
+- name: Enable and start OpenVPN service
+  service:
+    name: "openvpn@{{ openvpn_endpoint }}.service"
+    enabled: yes
+    state: started
+
+- name: Generate client configuration file
+  local_action: template src=client.ovpn.j2 dest="files/openvpn/config/{{ item }}-{{ openvpn_endpoint }}-{{ ansible_fqdn }}.ovpn"
+  with_items: openvpn_clients
